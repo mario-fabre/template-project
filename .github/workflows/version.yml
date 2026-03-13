@@ -1,0 +1,39 @@
+name: Auto Versioning
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      # 1️⃣ Checkout
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Configurar Git
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+      # 3️⃣ Ler versão atual e incrementar patch
+      - name: Bump version
+        id: bump
+        run: |
+          current=$(cat VERSION)
+          IFS='.' read -r major minor patch <<< "$current"
+          patch=$((patch + 1))
+          new_version="$major.$minor.$patch"
+          echo $new_version > VERSION
+          echo "new_version=$new_version" >> $GITHUB_ENV
+          git add VERSION
+          git commit -m "Bump version to $new_version"
+
+      # 4️⃣ Criar tag e push
+      - name: Tag and push
+        run: |
+          git tag "v$NEW_VERSION"
+          git push origin main --tags

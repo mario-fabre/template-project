@@ -40,6 +40,12 @@ jobs:
         uv tool install pip-audit          # Instala como uma ferramenta isolada
         uv run pip-audit                   # Roda via uv para garantir o PATH
         uv run pytest -v --cov=src --cov-report=xml
+    
+    - name: Create Git tag
+      id: tag
+      run: |
+        git tag -a "v1.0.0" -m "Release v1.0.0"
+        git push origin v1.0.0
 
 
 
