@@ -5,34 +5,51 @@ on:
     branches:
       - main
 
+# Força o uso do Node 24 para evitar avisos de depreciação futuros
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   bump-version:
     runs-on: ubuntu-latest
+    # Permissão necessária para o GitHub Actions criar tags e fazer commits
+    permissions:
+      contents: write
+    
     steps:
-      # 1️⃣ Checkout
+      # 1️⃣ Checkout do código
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # 2️⃣ Configurar Git
       - name: Set up Git
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # 3️⃣ Ler versão atual e incrementar patch
+      # 3️⃣ Ler versão atual, incrementar patch e exportar variável
       - name: Bump version
         id: bump
         run: |
+          # Cria o arquivo VERSION caso ele não exista
+          if [ ! -f VERSION ]; then echo "0.1.0" > VERSION; fi
+          
           current=$(cat VERSION)
           IFS='.' read -r major minor patch <<< "$current"
-          patch=$((patch + 1))
-          new_version="$major.$minor.$patch"
+          new_version="$major.$minor.$((patch + 1))"
+          
           echo $new_version > VERSION
-          echo "new_version=$new_version" >> $GITHUB_ENV
+          
+          # Salva a nova versão no ambiente do GitHub para o próximo passo
+          echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
+          
           git add VERSION
-          git commit -m "Bump version to $new_version"
+          # [skip ci] evita que este commit dispare o workflow novamente em loop
+          git commit -m "chore: bump version to $new_version [skip ci]"
 
-      # 4️⃣ Criar tag e push
+      # 4️⃣ Criar tag e push usando a variável de ambiente
       - name: Tag and push
         run: |
           git tag "v$NEW_VERSION"
