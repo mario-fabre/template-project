@@ -34,12 +34,13 @@ jobs:
     - name: Run linters
       run: uv run pre-commit run --all-files || echo "Linter warnings detected"
     
-        # 6️⃣ Rodar auditoria e testes com cobertura
+        # 6️⃣ Auditoria de segurança e Testes com Cobertura
     - name: Audit and Run tests
       run: |
-        uv pip install pip-audit           # Instala a ferramenta de auditoria
-        pip-audit                          # Checa vulnerabilidades nas libs
-        uv run pytest --cov=src --cov-report=xml
+        uv tool install pip-audit          # Instala como uma ferramenta isolada
+        uv run pip-audit                   # Roda via uv para garantir o PATH
+        uv run pytest -v --cov=src --cov-report=xml
+
 
 
   docker-build:
