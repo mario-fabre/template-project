@@ -7,53 +7,44 @@ on:
   pull_request:
     branches: [ main ]
 
-env:
-  # Força as Actions que usam Node.js a rodarem na versão 24 (aviso de depreciação)
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build-test:
     runs-on: ubuntu-latest
 
     steps:
-    # 1️⃣ Pega o código do repositório
+    # 1️⃣ Atualizado para v4
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    # 2️⃣ Configura Python
+    # 2️⃣ Mantido v5 (é a mais atual)
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: 3.12
+        python-version: "3.12"
 
-    # 3️⃣ Instala uv (gerenciador de dependências)
+    # 3️⃣ Forma recomendada de instalar o uv no CI (mais rápido que via pip)
     - name: Install uv
-      run: pip install uv
+      uses: astral-sh/setup-uv@v5
 
-    # 4️⃣ Instala dependências do projeto via uv
+    # 4️⃣ CORREÇÃO: O comando correto é 'uv sync'
     - name: Install project dependencies
-      run: uv install
+      run: uv sync --all-extras --dev
 
-    # 5️⃣ Rodar lint/format opcional (pre-commit é manual aqui para evitar erros de Git)
-    - name: Run linters (pre-commit)
-      run: uv run pre-commit run --all-files --hook-stage manual || echo "Skipping pre-commit hooks requiring Git"
+    # 5️⃣ Rodar linters
+    - name: Run linters
+      run: uv run pre-commit run --all-files || echo "Linter warnings detected"
 
-    # 6️⃣ Rodar testes automatizados
+    # 6️⃣ Rodar testes
     - name: Run tests
       run: uv run pytest -v
 
   docker-build:
     runs-on: ubuntu-latest
-    needs: build-test  # só roda se os testes passarem
+    needs: build-test
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.12
+      uses: actions/checkout@v4
 
     - name: Build Docker image
       run: |
